@@ -10,7 +10,6 @@ jobs:
     runs-on: stella-a
 
     steps:
-      # Checkout
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -30,9 +29,10 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
       # ------------------------
-      # Trivy Scan (OSS必須)
+      # Trivy Scan
       # ------------------------
       - name: Trivy FS Scan
         uses: aquasecurity/trivy-action@v0.20.0
@@ -55,18 +55,10 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `[CI] Security gate failed on PR #${context.payload.pull_request.number}`,
-              body: `
-❌ **Security Gate Failed**
-
-- PR: #${context.payload.pull_request.number}
-- Commit: ${context.sha}
-- Triggered by: ${context.actor}
-
-Please check:
-- SonarQube Quality Gate
-- Trivy vulnerability scan
-
-Forgejo Actions logs contain details.
-`
+              title: "[CI] Security gate failed",
+              body:
+                "PR: #" + context.payload.pull_request.number + "\n" +
+                "Commit: " + context.sha + "\n" +
+                "Triggered by: " + context.actor + "\n\n" +
+                "Please check SonarQube and Trivy results."
             })
