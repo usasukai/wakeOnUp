@@ -7,7 +7,7 @@ on:
 
 jobs:
   security-gate:
-    runs-on: stella-alpha
+    runs-on: stella-a
 
     steps:
       - name: Checkout
