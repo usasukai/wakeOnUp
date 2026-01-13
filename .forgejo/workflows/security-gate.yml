@@ -1,0 +1,72 @@
+name: OSS Security Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security-gate:
+    runs-on: stella-a
+
+    steps:
+      # Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ------------------------
+      # SonarQube Scan
+      # ------------------------
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # ------------------------
+      # Trivy Scan (OSS必須)
+      # ------------------------
+      - name: Trivy FS Scan
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          cache-dir: /tmp/trivy-cache
+
+      # ------------------------
+      # Create Forgejo Issue on Failure
+      # ------------------------
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ vars.FORGEJO_TOKEN }}
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[CI] Security gate failed on PR #${context.payload.pull_request.number}`,
+              body: `
+❌ **Security Gate Failed**
+
+- PR: #${context.payload.pull_request.number}
+- Commit: ${context.sha}
+- Triggered by: ${context.actor}
+
+Please check:
+- SonarQube Quality Gate
+- Trivy vulnerability scan
+
+Forgejo Actions logs contain details.
+`
+            })
