@@ -1,216 +1,216 @@
 # WakeOnLan
 
-[English](./README_en.md) | 日本語
+English | [日本語](./README_ja.md)
 
-ネットワーク上のコンピュータをリモートで起動するためのWake-on-LAN（WoL）アプリケーションです。WebアプリケーションまたはElectronデスクトップアプリとして動作します。
+A Wake-on-LAN (WoL) application for remotely powering on computers over the network. Works as both a web application and an Electron desktop app.
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## 📋 目次
+## 📋 Table of Contents
 
-- [特徴](#-特徴)
-- [スクリーンショット](#-スクリーンショット)
-- [技術スタック](#-技術スタック)
-- [前提条件](#-前提条件)
-- [インストール](#-インストール)
-- [使い方](#-使い方)
-  - [開発モード](#開発モード)
-  - [本番ビルド（Web版）](#本番ビルドweb版)
-  - [Electronデスクトップアプリ](#electronデスクトップアプリ)
-- [プロジェクト構造](#-プロジェクト構造)
-- [設定](#-設定)
-- [トラブルシューティング](#-トラブルシューティング)
-- [ライセンス](#-ライセンス)
+- [Features](#-features)
+- [Screenshots](#-screenshots)
+- [Tech Stack](#-tech-stack)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Usage](#-usage)
+  - [Development Mode](#development-mode)
+  - [Production Build (Web)](#production-build-web)
+  - [Electron Desktop App](#electron-desktop-app)
+- [Project Structure](#-project-structure)
+- [Configuration](#-configuration)
+- [Troubleshooting](#-troubleshooting)
+- [License](#-license)
 
-## ✨ 特徴
+## ✨ Features
 
-- 🖥️ **マシン管理**: 名前とMACアドレスを登録してマシンを管理
-- 🚀 **Wake-on-LAN**: マジックパケットを送信してリモートでマシンを起動
-- 💾 **データ永続化**: マシン情報をJSONファイルに保存
-- 🌐 **デュアルモード対応**:
-  - Webアプリケーション（Next.js）
-  - デスクトップアプリケーション（Electron）
-- 🎨 **モダンUI**: Tailwind CSSとHeroUIを使用した美しいインターフェース
-- ⚡ **高速**: Next.js 15のApp Routerを使用
-- 🔔 **通知**: Sonnerを使用したトースト通知
+- 🖥️ **Machine Management**: Register and manage machines with names and MAC addresses
+- 🚀 **Wake-on-LAN**: Send magic packets to remotely power on machines
+- 💾 **Data Persistence**: Store machine information in JSON files
+- 🌐 **Dual Mode Support**:
+  - Web Application (Next.js)
+  - Desktop Application (Electron)
+- 🎨 **Modern UI**: Beautiful interface using Tailwind CSS and HeroUI
+- ⚡ **Fast**: Powered by Next.js 15 App Router
+- 🔔 **Notifications**: Toast notifications using Sonner
 
-## 📸 スクリーンショット
+## 📸 Screenshots
 
-*(スクリーンショットを追加してください)*
+*(Add screenshots here)*
 
-## 🛠️ 技術スタック
+## 🛠️ Tech Stack
 
-### フロントエンド
-- **Next.js 15.1.6** - Reactフレームワーク
-- **React 19** - UIライブラリ
-- **@heroui/react** - UIコンポーネント
-- **Tailwind CSS** - スタイリング
-- **Framer Motion** - アニメーション
-- **Sonner** - トースト通知
+### Frontend
+- **Next.js 15.1.6** - React framework
+- **React 19** - UI library
+- **@heroui/react** - UI components
+- **Tailwind CSS** - Styling
+- **Framer Motion** - Animations
+- **Sonner** - Toast notifications
 
-### バックエンド
-- **Next.js API Routes** - REST API（Web版）
-- **Electron IPC** - プロセス間通信（Desktop版）
-- **wake_on_lan** - Wake-on-LANパケット送信
+### Backend
+- **Next.js API Routes** - REST API (Web version)
+- **Electron IPC** - Inter-process communication (Desktop version)
+- **wake_on_lan** - Wake-on-LAN packet transmission
 
-### デスクトップ
-- **Electron 39** - デスクトップアプリフレームワーク
-- **electron-builder** - アプリケーションビルド
+### Desktop
+- **Electron 39** - Desktop app framework
+- **electron-builder** - Application builder
 
-### 開発ツール
-- **TypeScript** - 型安全な開発
-- **ESLint** - コード品質
-- **tsup** - TypeScriptビルド
-- **Bun** - パッケージマネージャー
+### Development Tools
+- **TypeScript** - Type-safe development
+- **ESLint** - Code quality
+- **tsup** - TypeScript build tool
+- **Bun** - Package manager
 
-## 📦 前提条件
+## 📦 Prerequisites
 
-- Node.js 20以上
-- Bun（推奨）または npm/yarn/pnpm
-- Wake-on-LANを使用するマシンでWoL機能が有効になっていること
+- Node.js 20 or higher
+- Bun (recommended) or npm/yarn/pnpm
+- WoL functionality enabled on target machines
 
-## 🚀 インストール
+## 🚀 Installation
 
-1. リポジトリをクローン:
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd wakeonlan
 ```
 
-2. 依存関係をインストール:
+2. Install dependencies:
 ```bash
 bun install
-# または
+# or
 npm install
 ```
 
-## 💻 使い方
+## 💻 Usage
 
-### 開発モード
+### Development Mode
 
-Webアプリケーションとして開発サーバーを起動:
+Start the development server as a web application:
 
 ```bash
 bun run dev
-# または
+# or
 npm run dev
 ```
 
-ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 本番ビルド（Web版）
+### Production Build (Web)
 
 ```bash
 bun run build
 bun run start
 ```
 
-### Electronデスクトップアプリ
+### Electron Desktop App
 
-#### 開発モード
+#### Development Mode
 ```bash
 bun run electron-dev
-# または
+# or
 npm run electron-dev
 ```
 
-#### ビルド（配布用パッケージ作成）
+#### Build (Create Distribution Package)
 ```bash
 bun run electron-build
-# または
+# or
 npm run electron-build
 ```
 
-ビルドされたアプリケーションは`release`ディレクトリに作成されます。
+The built application will be created in the `release` directory.
 
-## 📁 プロジェクト構造
+## 📁 Project Structure
 
 ```
 wakeonlan/
 ├── src/
 │   ├── app/              # Next.js App Router
-│   │   ├── api/          # API Routes（Web版）
-│   │   ├── layout.tsx    # ルートレイアウト
-│   │   └── page.tsx      # メインページ
-│   ├── components/       # Reactコンポーネント
-│   └── lib/              # ユーティリティとヘルパー
+│   │   ├── api/          # API Routes (Web version)
+│   │   ├── layout.tsx    # Root layout
+│   │   └── page.tsx      # Main page
+│   ├── components/       # React components
+│   └── lib/              # Utilities and helpers
 ├── electron/
-│   └── main.ts           # Electronメインプロセス
-├── public/               # 静的ファイル
-├── machines.json         # マシンデータ（自動生成）
-└── package.json          # プロジェクト設定
+│   └── main.ts           # Electron main process
+├── public/               # Static files
+├── machines.json         # Machine data (auto-generated)
+└── package.json          # Project configuration
 ```
 
-## ⚙️ 設定
+## ⚙️ Configuration
 
-### データファイルの場所
+### Data File Location
 
-デフォルトでは、マシン情報は`machines.json`に保存されます。環境変数で変更可能:
+By default, machine information is stored in `machines.json`. You can change this with an environment variable:
 
 ```bash
 export WOL_DATA_FILE=/path/to/custom/machines.json
 ```
 
-### machines.jsonフォーマット
+### machines.json Format
 
 ```json
 [
   {
     "id": "uuid-v4-string",
-    "name": "マイPC",
+    "name": "My PC",
     "mac": "00:11:22:33:44:55"
   }
 ]
 ```
 
-## 🔧 トラブルシューティング
+## 🔧 Troubleshooting
 
-### Wake-on-LANが機能しない
+### Wake-on-LAN Not Working
 
-1. ターゲットマシンのBIOS/UEFIでWoL機能が有効になっていることを確認
-2. ネットワークアダプタの設定でWoLが有効になっていることを確認
-3. マシンが同じローカルネットワークにあることを確認
-4. MACアドレスが正しいことを確認（コロン区切り形式: `00:11:22:33:44:55`）
+1. Verify that WoL is enabled in the target machine's BIOS/UEFI
+2. Check that WoL is enabled in the network adapter settings
+3. Ensure the machine is on the same local network
+4. Verify the MAC address is correct (colon-separated format: `00:11:22:33:44:55`)
 
-### Electronアプリがビルドできない
+### Electron App Build Fails
 
 ```bash
-# 依存関係を再インストール
+# Reinstall dependencies
 rm -rf node_modules bun.lockb
 bun install
 
-# Electronをリビルド
+# Rebuild Electron
 bun run compile-electron
 ```
 
-## 📄 ライセンス
+## 📄 License
 
-このプロジェクトは[MITライセンス](./LICENSE)の下で公開されています。
+This project is licensed under the [MIT License](./LICENSE).
 
-### サードパーティライセンス
+### Third-Party Licenses
 
-本ソフトウェアは、多数のオープンソースライブラリを使用しています:
+This software uses numerous open-source libraries:
 
-- **主要ライブラリ**: React, Next.js, Electron, Tailwind CSS等
-- **総依存パッケージ数**: 533個
-- **使用ライセンス**: MIT (435個), ISC (47個), Apache-2.0 (15個), BSD等
+- **Main Libraries**: React, Next.js, Electron, Tailwind CSS, etc.
+- **Total Dependencies**: 533 packages
+- **License Types**: MIT (435), ISC (47), Apache-2.0 (15), BSD, etc.
 
-詳細な情報については、以下のファイルを参照してください:
-- [THIRD-PARTY-LICENSES.md](./THIRD-PARTY-LICENSES.md) - 主要な依存ライブラリの帰属表示
-- [LICENSE-REPORT.md](./LICENSE-REPORT.md) - 全依存ライブラリの詳細なライセンス点検レポート
+For detailed information, please refer to:
+- [THIRD-PARTY-LICENSES.md](./THIRD-PARTY-LICENSES.md) - Attribution notices for main dependencies
+- [LICENSE-REPORT.md](./LICENSE-REPORT.md) - Comprehensive license inspection report for all dependencies
 
-全ての依存ライブラリは、商用利用、改変、再配布が可能なライセンスを使用しています。
+All dependencies use licenses that permit commercial use, modification, and redistribution.
 
 ---
 
-## 🤝 貢献
+## 🤝 Contributing
 
-このプロジェクトはプライベートプロジェクトです。
+This is a private project.
 
-## 📧 お問い合わせ
+## 📧 Contact
 
-問題や質問がある場合は、Issueを作成してください。
+If you have any issues or questions, please create an Issue.
 
 ---
 
