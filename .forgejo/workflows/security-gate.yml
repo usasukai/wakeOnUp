@@ -51,13 +51,15 @@ jobs:
         with:
           github-token: ${{ vars.FORGEJO_TOKEN }}
           script: |
+            const body = `PR: #${context.payload.pull_request.number}
+            Commit: ${context.sha}
+            Triggered by: ${context.actor}
+
+            Please check SonarQube and Trivy results.`;
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: "[CI] Security gate failed",
-              body:
-                "PR: #" + context.payload.pull_request.number + "\n" +
-                "Commit: " + context.sha + "\n" +
-                "Triggered by: " + context.actor + "\n\n" +
-                "Please check SonarQube and Trivy results."
-            })
+              body: body
+            });
