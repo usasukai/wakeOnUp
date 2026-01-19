@@ -19,13 +19,13 @@ jobs:
       # SonarQube Scan
       # ------------------------
       - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@v2
+        uses: https://github.com/sonarsource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
       - name: SonarQube Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@v1
+        uses: https://github.com/sonarsource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -35,7 +35,7 @@ jobs:
       # Trivy Scan
       # ------------------------
       - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@v0.20.0
+        uses: https://github.com/aquasecurity/trivy-action@0.20.0
         with:
           scan-type: fs
           scan-ref: .
@@ -48,7 +48,7 @@ jobs:
       # ------------------------
       - name: Create Issue on Failure
         if: failure()
-        uses: actions/github-script@v7
+        uses: https://github.com/actions/github-script@v7
         with:
           github-token: ${{ vars.FORGEJO_TOKEN }}
           script: |
