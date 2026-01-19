@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:  # 手動実行を許可
 
 jobs:
   security-gate:
