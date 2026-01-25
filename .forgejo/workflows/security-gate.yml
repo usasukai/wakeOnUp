@@ -24,6 +24,21 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
+      - name: Install jq
+        run: |
+          if command -v apk > /dev/null; then
+            apk add --no-cache jq
+          elif command -v apt-get > /dev/null; then
+            apt-get update && apt-get install -y jq
+          elif command -v dnf > /dev/null; then
+            dnf install -y jq
+          elif command -v yum > /dev/null; then
+            yum install -y jq
+          else
+            echo "No supported package manager found to install jq"
+            exit 1
+          fi
+
       - name: SonarQube Quality Gate
         uses: https://github.com/sonarsource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5

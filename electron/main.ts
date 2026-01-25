@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, protocol, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import wol from 'wake_on_lan';
-import util from 'util';
+import util from 'node:util';
 import { v4 as uuidv4 } from 'uuid';
 import { getMachines, addMachine, deleteMachine, Machine, setDataFilePath } from '../src/lib/storage';
 

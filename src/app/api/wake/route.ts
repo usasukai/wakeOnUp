@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import wol from 'wake_on_lan';
-import util from 'util';
+import util from 'node:util';
 
 const isElectron = process.env.BUILD_TARGET === 'electron';
 export const dynamic = isElectron ? 'force-static' : 'auto';
