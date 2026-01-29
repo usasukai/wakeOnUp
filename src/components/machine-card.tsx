@@ -5,9 +5,9 @@ import { Machine } from "@/lib/storage";
 import { useState } from "react";
 
 interface MachineCardProps {
-  machine: Machine;
-  onWake: (mac: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  readonly machine: Machine;
+  readonly onWake: (mac: string) => Promise<void>;
+  readonly onDelete: (id: string) => Promise<void>;
 }
 
 export function MachineCard({ machine, onWake, onDelete }: MachineCardProps) {
@@ -27,7 +27,7 @@ export function MachineCard({ machine, onWake, onDelete }: MachineCardProps) {
     if (!confirm(`「${machine.name}」を削除してもよろしいですか？`)) {
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       await onDelete(machine.id);
@@ -46,16 +46,16 @@ export function MachineCard({ machine, onWake, onDelete }: MachineCardProps) {
       </CardHeader>
       <Divider />
       <CardFooter className="flex justify-between gap-2">
-        <Button 
-          color="danger" 
-          variant="light" 
+        <Button
+          color="danger"
+          variant="light"
           onPress={handleDelete}
           isLoading={isDeleting}
         >
           削除
         </Button>
-        <Button 
-          color="primary" 
+        <Button
+          color="primary"
           onPress={handleWake}
           isLoading={isWaking}
         >

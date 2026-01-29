@@ -70,6 +70,35 @@ export default function Home() {
     }
   };
 
+  let content;
+  if (loading) {
+    content = (
+      <div className="flex justify-center mt-20">
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (machines.length === 0) {
+    content = (
+      <div className="text-center mt-20 text-default-500">
+        <p>保存されたマシンがありません。</p>
+        <p>右上の「マシン追加」ボタンから登録してください。</p>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {machines.map((machine) => (
+          <MachineCard
+            key={machine.id}
+            machine={machine}
+            onWake={handleWake}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-background text-foreground ${isMacElectron ? 'pt-8' : ''}`}>
       <Navbar isBordered className={isMacElectron ? 'pl-14' : undefined}>
@@ -86,27 +115,7 @@ export default function Home() {
       </Navbar>
 
       <main className="container mx-auto p-4 pt-8">
-        {loading ? (
-          <div className="flex justify-center mt-20">
-            <Spinner size="lg" />
-          </div>
-        ) : machines.length === 0 ? (
-          <div className="text-center mt-20 text-default-500">
-            <p>保存されたマシンがありません。</p>
-            <p>右上の「マシン追加」ボタンから登録してください。</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {machines.map((machine) => (
-              <MachineCard
-                key={machine.id}
-                machine={machine}
-                onWake={handleWake}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+        {content}
       </main>
 
       <AddMachineModal isOpen={isOpen} onOpenChange={onOpenChange} onAdd={handleAdd} />

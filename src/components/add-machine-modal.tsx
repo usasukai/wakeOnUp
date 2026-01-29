@@ -4,9 +4,9 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input
 import { useState } from "react";
 
 interface AddMachineModalProps {
-  isOpen: boolean;
-  onOpenChange: () => void;
-  onAdd: (name: string, mac: string) => Promise<void>;
+  readonly isOpen: boolean;
+  readonly onOpenChange: () => void;
+  readonly onAdd: (name: string, mac: string) => Promise<void>;
 }
 
 export function AddMachineModal({ isOpen, onOpenChange, onAdd }: AddMachineModalProps) {

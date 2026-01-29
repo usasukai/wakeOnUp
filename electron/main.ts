@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, protocol, dialog } from 'electron';
 import path from 'path';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import wol from 'wake_on_lan';
 import util from 'node:util';
 import { v4 as uuidv4 } from 'uuid';

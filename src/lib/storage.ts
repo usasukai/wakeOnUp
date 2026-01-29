@@ -1,4 +1,4 @@
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import path from 'path';
 
 // デフォルトは開発/Nextでも動作するように cwd 配下
@@ -22,13 +22,13 @@ export async function getMachines(): Promise<Machine[]> {
   try {
     const data = await fs.readFile(getDataFile(), 'utf-8');
     const machines = JSON.parse(data);
-    
+
     // 簡易的な型チェック
     if (!Array.isArray(machines)) {
       console.error('Invalid data format in machines file');
       return [];
     }
-    
+
     return machines;
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
