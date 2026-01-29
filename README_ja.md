@@ -1,7 +1,7 @@
 # WakeOnLan
 
 
-[![品質ゲート状態](https://sonar-tag-proxy.wixtht.com/api/project_badges/measure?project=wakeOnLan&metric=alert_status&token=sqb_325d10445290504481414e4a7f2f5d38cabc61ed)](https://code-dig.wixtht.com/dashboard?id=wakeOnLan)
+[![品質ゲート状態](https://sonar-tag-proxy.wixtht.com/api/project_badges/measure?project=wakeOnLan&metric=alert_status&token=sqb_325d10445290504481414e4a7f2f5d38cabc61ed)](https://sonar-tag-proxy.wixtht.com/dashboard?id=wakeOnLan)
 
 [English](./README.md) | 日本語
 
