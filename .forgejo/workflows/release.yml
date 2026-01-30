@@ -202,51 +202,47 @@ jobs:
 
       - name: Create Release
         if: steps.analyze.outputs.should_release == 'true'
-        uses: https://github.com/actions/github-script@v7
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs').promises;
-            const path = require('path');
-            const version = '${{ steps.version.outputs.new_version }}';
-            const changelog = `${{ steps.changelog.outputs.changelog }}`;
-            
-            // リリース作成
-            const release = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: version,
-              name: `Release ${version}`,
-              body: changelog || 'No changelog available.',
-              draft: false,
-              prerelease: false
-            });
-            
-            // ビルド成果物をアップロード (releaseディレクトリ内のファイル)
-            const releaseDir = 'release';
-            try {
-              const files = await fs.readdir(releaseDir);
-              for (const file of files) {
-                // dmg, zip, exeなどを対象（ymlやblockmapは除外）
-                if (file.endsWith('.dmg') || file.endsWith('.zip') || file.endsWith('.exe') || file.endsWith('.AppImage')) {
-                  console.log(`Uploading ${file}...`);
-                  const filePath = path.join(releaseDir, file);
-                  const fileData = await fs.readFile(filePath);
-                  
-                  await github.rest.repos.uploadReleaseAsset({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    release_id: release.data.id,
-                    name: file,
-                    data: fileData
-                  });
-                }
-              }
-            } catch (error) {
-              console.log('Error uploading assets:', error);
-            }
-            
-            console.log(`Created release: ${version}`);
+        env:
+          FORGEJO_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          VERSION: ${{ steps.version.outputs.new_version }}
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+        run: |
+          # Forgejo APIでリリース作成
+          REPO_URL="https://code.varlox.me/api/v1/repos/${{ github.repository }}"
+          
+          # リリース作成
+          RELEASE_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\": \"$VERSION\", \"name\": \"Release $VERSION\", \"body\": \"$CHANGELOG\", \"draft\": false, \"prerelease\": false}" \
+            "$REPO_URL/releases")
+          
+          echo "Release response: $RELEASE_RESPONSE"
+          
+          # リリースIDを取得
+          RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id')
+          echo "Release ID: $RELEASE_ID"
+          
+          if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
+            echo "Failed to create release, but continuing..."
+            exit 0
+          fi
+          
+          # アセットをアップロード
+          for file in release/*.AppImage release/*.dmg release/*.zip release/*.exe 2>/dev/null; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "Uploading $filename..."
+              curl -s -X POST \
+                -H "Authorization: token $FORGEJO_TOKEN" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary "@$file" \
+                "$REPO_URL/releases/$RELEASE_ID/assets?name=$filename"
+              echo "Uploaded $filename"
+            fi
+          done
+          
+          echo "Created release: $VERSION"
 
       - name: Skip release
         if: steps.analyze.outputs.should_release != 'true'
