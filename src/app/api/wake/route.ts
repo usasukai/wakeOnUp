@@ -2,16 +2,12 @@ import { NextResponse } from 'next/server';
 import wol from 'wake_on_lan';
 import util from 'node:util';
 
-const isElectron = process.env.BUILD_TARGET === 'electron';
-export const dynamic = isElectron ? 'force-static' : 'auto';
+// Electron build: API routes are not used, but we need to satisfy the build
+export const dynamic = 'force-static';
 
 const wake = util.promisify(wol.wake);
 
 export async function POST(request: Request) {
-  if (isElectron) {
-    // Export ではミューテーション不可: 405 を返す
-    return NextResponse.json({ error: 'Not available in export build' }, { status: 405 });
-  }
   try {
     const { mac } = await request.json();
 
