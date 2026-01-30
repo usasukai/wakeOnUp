@@ -15,6 +15,139 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          # 最新のタグを取得（なければv0.0.0）
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Analyze commits
+        id: analyze
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          
+          # タグ以降のコミットを取得
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%s" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s" ${LATEST_TAG}..HEAD)
+          fi
+          
+          echo "Commits since $LATEST_TAG:"
+          echo "$COMMITS"
+          
+          # フラグ初期化
+          HAS_BREAKING=false
+          HAS_FEAT=false
+          HAS_FIX=false
+          
+          # コミットメッセージを解析
+          while IFS= read -r commit; do
+            if [[ "$commit" =~ ^feat!: ]] || [[ "$commit" =~ BREAKING[[:space:]]CHANGE ]]; then
+              HAS_BREAKING=true
+            elif [[ "$commit" =~ ^feat: ]] || [[ "$commit" =~ ^feat\( ]]; then
+              HAS_FEAT=true
+            elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^fix\( ]]; then
+              HAS_FIX=true
+            fi
+          done <<< "$COMMITS"
+          
+          # リリースが必要かどうか判定
+          if [ "$HAS_BREAKING" = true ] || [ "$HAS_FEAT" = true ] || [ "$HAS_FIX" = true ]; then
+            SHOULD_RELEASE=true
+          else
+            SHOULD_RELEASE=false
+          fi
+          
+          echo "has_breaking=$HAS_BREAKING" >> $GITHUB_OUTPUT
+          echo "has_feat=$HAS_FEAT" >> $GITHUB_OUTPUT
+          echo "has_fix=$HAS_FIX" >> $GITHUB_OUTPUT
+          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
+          
+          echo "Analysis: breaking=$HAS_BREAKING, feat=$HAS_FEAT, fix=$HAS_FIX, should_release=$SHOULD_RELEASE"
+
+      - name: Calculate new version
+        id: version
+        if: steps.analyze.outputs.should_release == 'true'
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          
+          # vプレフィックスを除去
+          VERSION=${LATEST_TAG#v}
+          
+          # セマンティックバージョンを分解
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          
+          # バージョン計算
+          if [ "${{ steps.analyze.outputs.has_breaking }}" = "true" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "${{ steps.analyze.outputs.has_feat }}" = "true" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif [ "${{ steps.analyze.outputs.has_fix }}" = "true" ]; then
+            PATCH=$((PATCH + 1))
+          fi
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        if: steps.analyze.outputs.should_release == 'true'
+        run: |
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          
+          # CHANGELOG生成
+          CHANGELOG=""
+          
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%s|%h" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s|%h" ${LATEST_TAG}..HEAD)
+          fi
+          
+          # カテゴリ別に分類
+          BREAKING=""
+          FEATURES=""
+          FIXES=""
+          OTHERS=""
+          
+          while IFS='|' read -r message hash; do
+            if [[ "$message" =~ ^feat!: ]] || [[ "$message" =~ BREAKING[[:space:]]CHANGE ]]; then
+              BREAKING="${BREAKING}\n- ${message} (${hash})"
+            elif [[ "$message" =~ ^feat: ]] || [[ "$message" =~ ^feat\( ]]; then
+              FEATURES="${FEATURES}\n- ${message} (${hash})"
+            elif [[ "$message" =~ ^fix: ]] || [[ "$message" =~ ^fix\( ]]; then
+              FIXES="${FIXES}\n- ${message} (${hash})"
+            elif [[ ! "$message" =~ ^(docs|chore|ci|style|refactor|test): ]]; then
+              OTHERS="${OTHERS}\n- ${message} (${hash})"
+            fi
+          done <<< "$COMMITS"
+          
+          # CHANGELOG組み立て
+          if [ -n "$BREAKING" ]; then
+            CHANGELOG="${CHANGELOG}## ⚠️ Breaking Changes${BREAKING}\n\n"
+          fi
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}## ✨ Features${FEATURES}\n\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}## 🐛 Bug Fixes${FIXES}\n\n"
+          fi
+          if [ -n "$OTHERS" ]; then
+            CHANGELOG="${CHANGELOG}## 📦 Other Changes${OTHERS}\n\n"
+          fi
+          
+          # 出力（改行をエスケープ）
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Setup Bun
         if: steps.analyze.outputs.should_release == 'true'
         uses: oven-sh/setup-bun@v2
@@ -49,7 +182,7 @@ jobs:
         if: steps.analyze.outputs.should_release == 'true'
         uses: https://github.com/actions/github-script@v7
         with:
-          github-token: ${{ secrets.RELEASE_TOKEN || github.token }}
+          github-token: ${{ github.token }}
           script: |
             const fs = require('fs').promises;
             const path = require('path');
@@ -98,4 +231,3 @@ jobs:
         run: |
           echo "No feat/fix commits found. Skipping release."
           echo "Commit types that trigger releases: feat, fix, feat!, BREAKING CHANGE"
-
