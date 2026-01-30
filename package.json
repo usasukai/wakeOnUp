@@ -2,7 +2,11 @@
   "name": "wakeonlan",
   "version": "0.1.0",
   "description": "Wake-on-LAN application for remotely waking up computers on your network",
-  "author": "usasuke",
+  "author": {
+    "name": "usasuke",
+    "email": "usasuke@example.com"
+  },
+  "homepage": "https://code.varlox.me/usasuke/wakeOnUp",
   "repository": {
     "type": "git",
     "url": "https://code.varlox.me/usasuke/wakeOnUp.git"
@@ -30,8 +34,7 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "category": "Utility"
     },
