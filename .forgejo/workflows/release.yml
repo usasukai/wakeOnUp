@@ -161,8 +161,24 @@ jobs:
       - name: Build Electron App
         if: steps.analyze.outputs.should_release == 'true'
         run: |
-          # バージョンを更新してビルド
-          npm version ${{ steps.version.outputs.new_version }} --no-git-tag-version
+          # バージョンを更新 (jqを使用)
+          VERSION="${{ steps.version.outputs.new_version }}"
+          VERSION_NUM="${VERSION#v}"
+          
+          # jqがなければインストール
+          if ! command -v jq > /dev/null; then
+            if command -v apk > /dev/null; then
+              apk add --no-cache jq
+            elif command -v apt-get > /dev/null; then
+              apt-get update && apt-get install -y jq
+            fi
+          fi
+          
+          # package.jsonのバージョンを更新
+          jq --arg v "$VERSION_NUM" '.version = $v' package.json > package.json.tmp
+          mv package.json.tmp package.json
+          
+          # Electronビルド
           bun run electron-build
 
       - name: Create tag
