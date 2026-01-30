@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "electron-dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && tsup --watch && electron .\"",
-    "export:electron": "BUILD_TARGET=electron next build && next export",
-    "electron-build": "BUILD_TARGET=electron next build && next export && tsup && electron-builder",
+    "export:electron": "BUILD_TARGET=electron next build",
+    "electron-build": "BUILD_TARGET=electron next build && tsup && electron-builder",
     "compile-electron": "tsup",
     "gen:favicon": "node scripts/gen-favicon.js"
   },
