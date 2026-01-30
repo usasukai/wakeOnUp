@@ -178,8 +178,14 @@ jobs:
           jq --arg v "$VERSION_NUM" '.version = $v' package.json > package.json.tmp
           mv package.json.tmp package.json
           
+          # APIフォルダを一時的にリネーム (静的エクスポートではAPIルートはサポートされない)
+          mv src/app/api src/app/_api_disabled
+          
           # Electronビルド
           bun run electron-build
+          
+          # APIフォルダを復元
+          mv src/app/_api_disabled src/app/api
 
       - name: Create tag
         if: steps.analyze.outputs.should_release == 'true'
