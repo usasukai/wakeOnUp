@@ -187,30 +187,6 @@ jobs:
           # APIフォルダを復元
           mv src/app/_api_disabled src/app/api
 
-      - name: Create release branch
-        if: steps.analyze.outputs.should_release == 'true'
-        run: |
-          NEW_VERSION="${{ steps.version.outputs.new_version }}"
-          BRANCH_NAME="release/$NEW_VERSION"
-          
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # リリースブランチを作成
-          git checkout -b "$BRANCH_NAME"
-          
-          # package.jsonの変更をコミット（バージョン更新）
-          git add package.json
-          git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
-          
-          # リリースブランチをプッシュ
-          git push origin "$BRANCH_NAME"
-          
-          echo "Created and pushed branch: $BRANCH_NAME"
-          
-          # mainブランチに戻る
-          git checkout main
-
       - name: Create tag
         if: steps.analyze.outputs.should_release == 'true'
         run: |
