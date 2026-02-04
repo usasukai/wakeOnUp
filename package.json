@@ -1,6 +1,6 @@
 {
   "name": "wakeonlan",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Wake-on-LAN application for remotely waking up computers on your network",
   "author": {
     "name": "usasuke",
