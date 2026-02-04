@@ -1,13 +1,40 @@
-name: Release
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:  # 手動実行を許可
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
+  # テストジョブ - 常に実行
+  test:
+    runs-on: stella-a
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+  # リリースジョブ - テスト成功後、feat/fixコミット時のみ実行
   release:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: stella-a
     steps:
       - name: Checkout
@@ -18,7 +45,6 @@ jobs:
       - name: Get latest tag
         id: get_tag
         run: |
-          # 最新のタグを取得（なければv0.0.0）
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "Latest tag: $LATEST_TAG"
@@ -28,7 +54,6 @@ jobs:
         run: |
           LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
           
-          # タグ以降のコミットを取得
           if [ "$LATEST_TAG" = "v0.0.0" ]; then
             COMMITS=$(git log --pretty=format:"%s" HEAD)
           else
@@ -38,12 +63,10 @@ jobs:
           echo "Commits since $LATEST_TAG:"
           echo "$COMMITS"
           
-          # フラグ初期化
           HAS_BREAKING=false
           HAS_FEAT=false
           HAS_FIX=false
           
-          # コミットメッセージを解析
           while IFS= read -r commit; do
             if [[ "$commit" =~ ^feat!: ]] || [[ "$commit" =~ BREAKING[[:space:]]CHANGE ]]; then
               HAS_BREAKING=true
@@ -54,7 +77,6 @@ jobs:
             fi
           done <<< "$COMMITS"
           
-          # リリースが必要かどうか判定
           if [ "$HAS_BREAKING" = true ] || [ "$HAS_FEAT" = true ] || [ "$HAS_FIX" = true ]; then
             SHOULD_RELEASE=true
           else
@@ -73,14 +95,9 @@ jobs:
         if: steps.analyze.outputs.should_release == 'true'
         run: |
           LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
-          
-          # vプレフィックスを除去
           VERSION=${LATEST_TAG#v}
-          
-          # セマンティックバージョンを分解
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           
-          # バージョン計算
           if [ "${{ steps.analyze.outputs.has_breaking }}" = "true" ]; then
             MAJOR=$((MAJOR + 1))
             MINOR=0
@@ -102,20 +119,15 @@ jobs:
         run: |
           LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
           
-          # CHANGELOG生成
-          CHANGELOG=""
-          
           if [ "$LATEST_TAG" = "v0.0.0" ]; then
             COMMITS=$(git log --pretty=format:"%s|%h" HEAD)
           else
             COMMITS=$(git log --pretty=format:"%s|%h" ${LATEST_TAG}..HEAD)
           fi
           
-          # カテゴリ別に分類
           BREAKING=""
           FEATURES=""
           FIXES=""
-          OTHERS=""
           
           while IFS='|' read -r message hash; do
             if [[ "$message" =~ ^feat!: ]] || [[ "$message" =~ BREAKING[[:space:]]CHANGE ]]; then
@@ -124,12 +136,10 @@ jobs:
               FEATURES="${FEATURES}\n- ${message} (${hash})"
             elif [[ "$message" =~ ^fix: ]] || [[ "$message" =~ ^fix\( ]]; then
               FIXES="${FIXES}\n- ${message} (${hash})"
-            elif [[ ! "$message" =~ ^(docs|chore|ci|style|refactor|test): ]]; then
-              OTHERS="${OTHERS}\n- ${message} (${hash})"
             fi
           done <<< "$COMMITS"
           
-          # CHANGELOG組み立て
+          CHANGELOG=""
           if [ -n "$BREAKING" ]; then
             CHANGELOG="${CHANGELOG}## ⚠️ Breaking Changes${BREAKING}\n\n"
           fi
@@ -139,11 +149,7 @@ jobs:
           if [ -n "$FIXES" ]; then
             CHANGELOG="${CHANGELOG}## 🐛 Bug Fixes${FIXES}\n\n"
           fi
-          if [ -n "$OTHERS" ]; then
-            CHANGELOG="${CHANGELOG}## 📦 Other Changes${OTHERS}\n\n"
-          fi
           
-          # 出力（改行をエスケープ）
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -161,11 +167,9 @@ jobs:
       - name: Build Electron App
         if: steps.analyze.outputs.should_release == 'true'
         run: |
-          # バージョンを更新 (jqを使用)
           VERSION="${{ steps.version.outputs.new_version }}"
           VERSION_NUM="${VERSION#v}"
           
-          # jqがなければインストール
           if ! command -v jq > /dev/null; then
             if command -v apk > /dev/null; then
               apk add --no-cache jq
@@ -174,17 +178,11 @@ jobs:
             fi
           fi
           
-          # package.jsonのバージョンを更新
           jq --arg v "$VERSION_NUM" '.version = $v' package.json > package.json.tmp
           mv package.json.tmp package.json
           
-          # APIフォルダを一時的にリネーム (静的エクスポートではAPIルートはサポートされない)
           mv src/app/api src/app/_api_disabled
-          
-          # Electronビルド
           bun run electron-build
-          
-          # APIフォルダを復元
           mv src/app/_api_disabled src/app/api
 
       - name: Create tag
@@ -207,10 +205,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.new_version }}
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         run: |
-          # Forgejo APIでリリース作成
           REPO_URL="https://code.varlox.me/api/v1/repos/${{ github.repository }}"
           
-          # リリース作成
           RELEASE_RESPONSE=$(curl -s -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             -H "Content-Type: application/json" \
@@ -219,7 +215,6 @@ jobs:
           
           echo "Release response: $RELEASE_RESPONSE"
           
-          # リリースIDを取得
           RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id')
           echo "Release ID: $RELEASE_ID"
           
@@ -228,7 +223,6 @@ jobs:
             exit 0
           fi
           
-          # アセットをアップロード
           for file in release/*.AppImage release/*.dmg release/*.zip release/*.exe 2>/dev/null; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
